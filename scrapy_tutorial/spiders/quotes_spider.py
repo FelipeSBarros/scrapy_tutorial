@@ -3,7 +3,7 @@ import scrapy
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
 
-    def strat_request(self):
+    def start_requests(self):
         url = 'http://quotes.toscrape.com/'
         tag = getattr(self, 'tag', None)
         if tag is not None:
@@ -17,4 +17,5 @@ class QuotesSpider(scrapy.Spider):
                 'author': quote.css('small.author::text').get(),
                 'tags': quote.css('div.tags a.tag::text').getall(),
             }
+
         yield from response.follow_all(css='ul.pager a', callback=self.parse)
