@@ -1,3 +1,5 @@
 *.html
 .idea
 .venv
+*.json
+*.pyc
