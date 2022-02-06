@@ -15,3 +15,16 @@ Por isso, alguns spiders deixarão de fazer sentido, por terem sido consolidados
 Scrapy é asíncrono e está baseado em [`twisted`](https://twistedmatrix.com/trac/):
 > Twisted is an event-driven networking engine written in Python
 
+Os dados raspados pelo scrapy fundamentam-se no conceito de `itens`. Ou seja, os dados são raspados e são instanciados em classe [`scrapy.item.Items`](https://docs.scrapy.org/en/latest/topics/items.html): um objeto python que define pares de chave-valor. Logo, scrapy suporta e possui várias classes de items [1](https://docs.scrapy.org/en/latest/topics/items.html#item-types) [2](https://docs.scrapy.org/en/latest/topics/items.html#supporting-item-types);  
+> In other words, Field objects are plain-old Python dicts.  
+
+Esses dados, agora instância de `Items` são submetidos ao *Item Pipeline* para processamentos futuros. Considere ler os pontos chave que justificam o uso do `Items`, no tutorial da [towards data science](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-ii-b917509b73f7).  
+Fluxo de processmento do scrapy:  
+![](https://docs.scrapy.org/en/latest/_images/scrapy_architecture_02.png)  
+
+Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunto se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.
+
+Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html), que é uma forma mais conveniente de incorporar os dados instanciando como Items, permitindo pré e pós-processamento dos mesmos (como limpeza, conversão, etc.) num código a parte. O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de valores passados. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
+
+Neste caso, vamos adicionar uma função em `items.py` a ser aplicada usando o [`MapCompose`](https://docs.scrapy.org/en/2.4/_modules/itemloaders/processors.html), que é um [`loader.processors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors) removendo as áspas unicode que vem da citação.  
+
