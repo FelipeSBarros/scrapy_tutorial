@@ -18,4 +18,15 @@ class QuotesSpider(scrapy.Spider):
                 'tags': quote.css('div.tags a.tag::text').getall(),
             }
 
+        author_url = response.css('.author + a::attr(href)').get()
+        yield response.follow(author_url, self.parse_author)
+
         yield from response.follow_all(css='ul.pager a', callback=self.parse)
+
+    def parse_author(self, response):
+        yield {
+            'author_name': response.css('.author-title::text').get().strip(),
+            'auhtor_birthdate': response.css('.author-born-date::text').get(),
+            'author_bornlocation': response.css('.author-born-location::text').get(),
+            'author_bio': response.css('.author-description::text').get().strip(),
+        }
