@@ -21,10 +21,10 @@ class QuotesSpider(scrapy.Spider):
             loader.add_css('tags', 'div.tags a.tag::text')
             quote_item = loader.load_item()
 
-            author_url = response.css('.author + a::attr(href)').get() # tirar do laço for?
+            author_url = response.css('.author + a::attr(href)').get()
             yield response.follow(author_url, self.parse_author, meta={'quote_item': quote_item})
 
-        yield from response.follow_all(css='ul.pager a', callback=self.parse)
+        yield from response.follow_all(css='li.next a', callback=self.parse)
 
     def parse_author(self, response):
         quote_item = response.meta['quote_item']
