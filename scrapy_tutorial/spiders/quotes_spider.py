@@ -15,16 +15,17 @@ class QuotesSpider(scrapy.Spider):
         yield scrapy.Request(url, self.parse)
 
     def parse(self, response):
-        for quote in response.css('div.quote'):
-            loader = ItemLoader(item=QuotesItem(), selector=quote)
-            loader.add_css('quote_content', 'span.text::text')
-            loader.add_css('tags', 'div.tags a.tag::text')
-            quote_item = loader.load_item()
+        quotes = response.css('div.quote')
 
-            author_url = response.css('.author + a::attr(href)').get()
+        for quote in quotes:
+            loader = ItemLoader(item=QuotesItem(), selector=quote)
+            loader.add_css('quote_content', '.text::text')
+            loader.add_css('tags', '.tag::text')
+            quote_item = loader.load_item()
+            author_url = quote.css('.author + a::attr(href)').get()
             yield response.follow(author_url, self.parse_author, meta={'quote_item': quote_item})
 
-        yield from response.follow_all(css='li.next a', callback=self.parse)
+        yield from response.follow_all(css='ul.pager a', callback=self.parse)
 
     def parse_author(self, response):
         quote_item = response.meta['quote_item']
