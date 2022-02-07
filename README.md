@@ -22,9 +22,10 @@ Esses dados, agora instância de `Items` são submetidos ao *Item Pipeline* para
 Fluxo de processmento do scrapy:  
 ![](https://docs.scrapy.org/en/latest/_images/scrapy_architecture_02.png)  
 
-Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunto se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.
+**Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunto se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.**
 
 Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html), que é uma forma mais conveniente de incorporar os dados instanciando como Items, permitindo pré e pós-processamento dos mesmos (como limpeza, conversão, etc.) num código a parte. O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de elementos. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
 
-Neste caso, vamos adicionar uma função em `items.py` a ser aplicada usando o [`MapCompose`](https://docs.scrapy.org/en/2.4/_modules/itemloaders/processors.html), que é um [`loader.processors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors) removendo as áspas unicode que vem da citação.  
+Neste caso, vamos adicionar, além de outras, uma função em `items.py` a ser aplicada usando o [`MapCompose`](https://docs.scrapy.org/en/2.4/_modules/itemloaders/processors.html), que é um [`loader.processors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors) removendo as áspas unicode que vem da citação.  
 
+Como após o parse inicial de "quotes", queremos que os dados sejam persistidos ao `parse_author`, podemos passá-los como parâmetro `meta` do [`scrapy.Request.follow`](https://docs.scrapy.org/en/latest/topics/request-response.html?highlight=follow#scrapy.http.Request).
