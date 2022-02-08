@@ -30,6 +30,7 @@ class SaveQuotesPipeline(object):
         author.name = item["author_name"]
         author.bornlocation = item["author_bornlocation"][0] # aqui estava retornando uma lista e or isso dava erro
         author.bio = item["author_bio"]
+        author.birthday = item["author_birthday"]
         quote.quote_content = item["quote_content"]
 
         # check whether the author existis
