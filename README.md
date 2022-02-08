@@ -32,6 +32,14 @@ Como após o parse inicial de "quotes", queremos que os dados sejam persistidos 
 
 Cada item retornado do scrapy é enviado apra um[`Item Pipeline`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html) para processamentos adicionais como salvar os dados numa base de dados, validação, remoção de duplicatas, etc. Os mesmos são classes definidas em `pipelines.py` e é necessário habilitar os pipelines no `settings.py`. Cada pipeline habilitda tem um vaor inteiro associado, variando de 0 a 1000, que indica a ordem de execussão: Valores mais baixos são executados primeiro.  
 
-Vamos usar o [`ORM SQLAlchemy`](https://www.sqlalchemy.org/) para salvar os dados num SQLite e, por isso, precisaremos criar um arquivo chamado `models.py`, dentro da pasta spider. Nele vamos definir uma classe para conexão ao banco `db_connect()`, que será definido no `settings.py` do projeto ( `get_project_settings().get("CONNECTION_STRING")`). O método `create_table()` criará as tabelas, na primeira execussão. A definição das tabelas seguem no mesmo arquivo. Apenas a tabela auxiliar (M-to-M) não é um método.
+Vamos usar o [`ORM SQLAlchemy`](https://www.sqlalchemy.org/) para salvar os dados num SQLite e, por isso, precisaremos criar um arquivo chamado `models.py`, dentro da pasta spider. Nele vamos definir uma classe para conexão ao banco `db_connect()`, que será definido no `settings.py` do projeto ( `get_project_settings().get("CONNECTION_STRING")`). O método `create_table()` criará as tabelas, na primeira execussão. A definição das tabelas seguem no mesmo arquivo. Apenas a tabela auxiliar (M-to-M) não é um método.  
 
-Em `ItemPipeline`, recebemos todos os itens raspados, então será nele onde definiremos a qual tablela/campo cada um será salva, bem como lógicas para evitar registros duplicados.
+Em `ItemPipeline`, recebemos todos os itens raspados, então será nele onde definiremos a qual tablela/campo cada um será salva, bem como lógicas para evitar registros duplicados. É preciso, ainda, habilitá-los no `settings.py`.  
+
+```
+ITEM_PIPELINES = {
+   # 'scrapy_tutorial.pipelines.ScrapyTutorialPipeline': 300,
+   'scrapy_tutorial.pipelines.SaveQuotesPipeline': 200,
+   'scrapy_tutorial.pipelines.DuplicatesPipeline': 100,
+}
+```  
