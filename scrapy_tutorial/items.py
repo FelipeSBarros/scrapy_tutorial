@@ -19,6 +19,9 @@ def parse_location(text):
     # parse ocation "in Ulm, Germany" removing "in"
     return text[3:]
 
+def parse_bio(text):
+    return ' '.join(text.split()[:20])
+
 
 class QuotesItem(scrapy.Item):
     # define the fields for your item here like:
@@ -41,6 +44,6 @@ class QuotesItem(scrapy.Item):
         outpur_processor=TakeFirst()
     )
     author_bio = scrapy.Field(
-        input_processor=MapCompose(str.split),
+        input_processor=MapCompose(parse_bio),
         output_processor=TakeFirst()  # need to be fixed
     )
