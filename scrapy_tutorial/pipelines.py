@@ -28,7 +28,7 @@ class SaveQuotesPipeline(object):
         author = Author()
         tag = Tag()
         author.name = item["author_name"]
-        author.bornlocation = item["author_bornlocation"]
+        author.bornlocation = item["author_bornlocation"][0] # aqui estava retornando uma lista e or isso dava erro
         author.bio = item["author_bio"]
         quote.quote_content = item["quote_content"]
 
