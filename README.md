@@ -7,8 +7,13 @@ Com relação ao processo de "gestão do log" da ferramenta, [ segui este tutori
 Também usei como consulta o artigo [demystifying scrapy item loaders](https://towardsdatascience.com/demystifying-scrapy-item-loaders-ffbc119d592a);  
 
 * [`spidermon`](https://spidermon.readthedocs.io/en/latest/) tutorial para monitoramento dos scraps;  
+* [`Sobre seletores css`](https://www.w3schools.com/cssref/css_selectors.asp)
+* [5 Useful Tips While Working With Python Scrapy](https://jerrynsh.com/5-useful-tips-while-working-with-python-scrapy/)  
+* [How to crawl the web politely with Scrapy](https://www.zyte.com/blog/how-to-crawl-the-web-politely-with-scrapy/)  
+* [Reaproveitando ItemLoaders](https://www.geeksforgeeks.org/scrapy-item-loaders/)  
+* [Scrapy e SQLAlchemy](https://www.andrewvillazon.com/move-data-to-db-with-sqlalchemy/)  
 
-## About Scrapy  
+## Sobre Scrapy  
 
 > BeautifulSoup is a library for parsing HTML and XML and Scrapy is a web scraping framework. [...]   
 > **In short, you should learn Scrapy if you want to do serious and systematic web scraping.**
@@ -24,7 +29,7 @@ Esses dados, agora instância de `Items` são submetidos ao *Item Pipeline* para
 Fluxo de processmento do scrapy:  
 ![](https://docs.scrapy.org/en/latest/_images/scrapy_architecture_02.png)  
 
-**Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunto se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.**
+**Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunte se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.**
 
 Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html), que é uma forma mais conveniente de incorporar os dados instanciando como Items, permitindo pré e pós-processamento dos mesmos (como limpeza, conversão, etc.) num código a parte. O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de elementos. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
 
