@@ -171,4 +171,6 @@ Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs
 
 ### Notificacoes  
 
-[notificções](https://spidermon.readthedocs.io/en/latest/getting-started.html#notifications) 
+`spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
+
+

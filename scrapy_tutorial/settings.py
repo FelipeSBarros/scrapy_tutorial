@@ -6,6 +6,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+from decouple import config
 
 BOT_NAME = 'scrapy_tutorial'
 
@@ -66,7 +67,8 @@ EXTENSIONS = {
 SPIDERMON_SPIDER_CLOSE_MONITORS = (
     'scrapy_tutorial.monitors.SpiderCloseMonitorSuite',
 )
-
+SPIDERMON_TELEGRAM_SENDER_TOKEN = config('SPIDERMON_TELEGRAM_SENDER_TOKEN')
+SPIDERMON_TELEGRAM_RECIPIENTS = config('chatid')
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {

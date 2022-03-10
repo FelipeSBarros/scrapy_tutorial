@@ -1,4 +1,6 @@
 from spidermon import Monitor, MonitorSuite, monitors
+from spidermon.contrib.actions.telegram.notifiers import SendTelegramMessageSpiderFinished
+
 
 @monitors.name('Item count')
 class ItemCountMonitor(Monitor):
@@ -7,7 +9,7 @@ class ItemCountMonitor(Monitor):
     def test_minimum_number_of_items(self):
         item_extracted = getattr(
             self.data.stats, 'item_scraped_count', 0)
-        minimum_threshold = 10
+        minimum_threshold = 1000000
 
         msg = 'Extracted less than {} items'.format(minimum_threshold)
         self.assertTrue(
@@ -15,7 +17,9 @@ class ItemCountMonitor(Monitor):
         )
 
 class SpiderCloseMonitorSuite(MonitorSuite):
-
     monitors = [
         ItemCountMonitor,
+    ]
+    monitors_failed_actions = [
+        SendTelegramMessageSpiderFinished,
     ]
