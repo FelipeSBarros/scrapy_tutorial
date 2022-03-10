@@ -65,7 +65,110 @@ Ao usar o módulo `logging` do python, podemos adicionar o registro de log da no
 O nível padrão de registro de logging é o `warning`. Ou seja, apenas os log identificados como `warning` ou de nível superior serão registrados/apresentados no console. Isso poder ser alterado na configuração de log. No caso do `logging`: `logging.basicConfig()`, ao qual poderá ser informado em `level`, qual o nível padrão de registro, `format` o formato a ser usado, inclusive se necessário informar data e hora, por exemplo...
 O `scrapy` uso o `configure_logging` para definir as configurações de log em geral, mas as configurações específicas seguem sendo definidas pelo `logging.basicConfig()`.
 
-No caso do `Scrapy`, Loggers são estão habilitados a apresentar mensagens enviadas por eles mesmos. Então é necessário usar "handlers" para apresentção dos mesmos e para redirecionamento das mensagens aos seus destinos como arquivos, emails, outras saódas padrão.
+No caso do `Scrapy`, Loggers são então habilitados a apresentar mensagens enviadas por eles mesmos. Então é necessário usar "handlers" para apresentção dos mesmos e para redirecionamento das mensagens aos seus destinos como arquivos, emails, outras saódas padrão.
 
 `scrapy.utils.log.configure_logging(settings = None, install_root_handler = True)`
 `install_root_handler` definido como `True` para habilitar o processo de registro de log.
+
+### Spidermon  
+
+`spidermon` é um módulo criado para facilitar o processo de monitoramento e validação das raspasgens realizadas em um projeto. Segundo os desenovledores, os monitores são similares a *test case*, com um conjunto de method que serão executdos em um momento bem definido com a lógica do monitoramento.  
+
+Instalação:  
+
+```python
+pip install "spidermon[monitoring,validation]"
+```
+
+Para desenvolvimento tanto de monitores, como de validação. Caso contrário pode-se escolher um em detrimento de outro.
+
+**Habilitando `spidermon`**:  
+Tendo um projeto `Scrapy`, basta adicionar ao `setting.py`
+```python
+SPIDERMON_ENABLED = True
+
+EXTENSIONS = {
+    'spidermon.contrib.scrapy.extensions.Spidermon': 500,
+}
+```  
+
+
+## Monitor  
+Os monitores deverão ser agrupados em *monitor suites*, que definem uma lista de monitores a serem executados e as ações a serem realizadas antes e depois que a execução de todos os monitores.  
+
+Podemos criar um monitor para checar que ao menos X items sejam retornados após a execução do `spider`.
+
+Os monitores deverão estar em um arquivo [`monitors.py`](/scrapy_tutorial/monitors.py) que armazenará a definição e configuração dos monitores.  
+
+Exemplo:  
+```python
+from spidermon import Monitor, monitors
+
+@monitors.name('Item count')
+class ItemCountMonitor(Monitor):
+
+    @monitors.name('Minimum items extracted')
+    def test_minimum_number_of_items_extracted(self):
+        minimum_threshold = 100
+        item_extracted = getattr(self.data.stats, 'item_scraped_count', 0)
+        self.assertFalse(
+            item_extracted < minimum_threshold,
+            msg='Extracted less than {} items'.format(minimum_threshold)
+        )
+```
+
+Após a definição dos monitores, é preciso incluir-los ao `MonitorSuite`, para que sejam executados:
+
+```python
+class SpiderCloseMonitorSuite(MonitorSuite):
+
+    monitors = [
+        ItemCountMonitor,
+    ]
+```
+
+:warning: Um `Monitor` herda do Python unittest.TestCase. Logo, pode-se usar todos os `assertions` existentes no Monitor.
+
+> As spidermon.core.monitors.Monitor inherits from Python unittest.TestCase, you can use all existing assertion methods in your monitors.
+
+É preciso informar no `settings.py`:
+```
+SPIDERMON_SPIDER_CLOSE_MONITORS = (
+    ''scrapy_tutorial.monitors.SpiderCloseMonitorSuite',',
+)
+```
+
+Seria possível, tamém configurar o pipeline para incluir o erro de validação como um campo no item. Por padrão, será inserido `_validation` ao item quando o mesmo não corresponder ao esquema, ao usar a constante `SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS` como `True` em `settings.py`.  
+
+```python
+SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
+```
+
+Exemplo de resultado:  
+```python
+{
+    '_validation': defaultdict(
+        <class 'list'>, {'author_url': ['Invalid URL']}),
+     'author': 'Mark Twain',
+     'author_url': 'not_a_valid_url',
+     'quote': 'Never tell the truth to people who are not worthy of it.',
+     'tags': ['truth']
+}
+```  
+
+#### Mais sobre `Monitor`
+Uma instância Monitor define a lógica de monitoramento e tem as seguintes proporidades, que podem ser usadas:
+
+- `data.stats` Objeto tipo dicionário contendo as estatísticas do `spider` executado.  
+- `data.crawler` Instancia do `Crawler` usado.  
+- `data.spider` Instancia do `spider` usado.  
+
+
+### Sobre `MonitorSuite`  
+O `MonitorSuit` agrupa um conjunto de classes `Monitor` e permite específicas quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
+
+Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto.
+
+### Notificacoes  
+
+[notificções](https://spidermon.readthedocs.io/en/latest/getting-started.html#notifications) 

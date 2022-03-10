@@ -57,9 +57,15 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    'scrapy.extensions.telnet.TelnetConsole': None,
-#}
+SPIDERMON_ENABLED = True
+EXTENSIONS = {
+   # 'scrapy.extensions.telnet.TelnetConsole': None,
+   'spidermon.contrib.scrapy.extensions.Spidermon': 500,
+}
+# SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
+SPIDERMON_SPIDER_CLOSE_MONITORS = (
+    'scrapy_tutorial.monitors.SpiderCloseMonitorSuite',
+)
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
