@@ -54,7 +54,7 @@ ITEM_PIPELINES = {
 
 ### Algumas configurações  
 
-[**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
+#### [**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
 Por padrão a velocidade de espera para download do `scrapy` é de 0 que, quando somado ao fato de o `scrapy` submeter várias requisições simultaneamente, podem fazer com que alguns servidores sejam sobre carregados. Cada uma dessas configurações podem ser definidas. Contudo, cada site pode ter uma resposta diferente e ao definir valores mais elevados, pode-se estar perdendo a chance de otimizar o processo de raspagem. Essa extensão serve para ajustar automaticamente e dinâmicamente o *delay* do processo de crawling beseando-se na velocidade de carga de ambos: o servidor onde se encontra o raspador e *website* sendo raspado.  
 
 > The main idea is the following: if a server needs latency seconds to respond, a client should send a request each latency/N seconds to have N requests processed in parallel.
@@ -111,7 +111,7 @@ EXTENSIONS = {
 ```  
 
 
-## Monitor  
+#### Monitor  
 Os monitores deverão ser agrupados em *monitor suites*, que definem uma lista de monitores a serem executados e as ações a serem realizadas antes e depois que a execução de todos os monitores.  
 
 Podemos criar um monitor para checar que ao menos X items sejam retornados após a execução do `spider`.
@@ -193,12 +193,12 @@ Exemplo de resultado:
 }
 ```  
 
-### Sobre `MonitorSuite`  
+#### Sobre `MonitorSuite`  
 O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicas quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
 
 Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto.
 
-### Notificacoes  
+#### Notificacoes  
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
 
