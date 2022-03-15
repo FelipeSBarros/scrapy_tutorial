@@ -202,3 +202,33 @@ Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
 
+
+### Fake user-agent
+
+*User-agent* é uma *string* enviada a cada requisição HTTP que os navegadores usam para identificar a si mesmos na rede.  
+No caso do `scrapy`, o mesmo está definido no `settings.py`:
+
+```python
+# Crawl responsibly by identifying yourself (and your website) on the user-agent
+#USER_AGENT = 'scraper (+http://www.yourdomain.com)'
+```
+
+Por tanto, os servidores podem ser configurados para responder de acordo com um determinado *user agent*. Por exemplo, uma requisição de celular pode ser diracionado a um contaúdo específico.  
+
+Contudo, alguns servidores são configurados para bloquear o processo de *crawl* e *scrap*. Para evitar isso, deve-se mudar o *user agent* para cada request.
+
+Para isso, existe o [`scrapy-faker-useragent`](https://github.com/alecxe/scrapy-fake-useragent). Trata-se de um `middleware` baseado no fake-useragent que, entre outras possibilidades, seleciona um *user agent* de acordo com estatísticas do mundo real.
+
+```python
+pip install scrapy-fake-useragent
+```
+O mesmo deve ser adcionado ao [`downloader middleware`](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#downloader-middleware) do `settings.py`:
+```python
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
+    'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,
+    'scrapy_fake_useragent.middleware.RetryUserAgentMiddleware': 401,
+}
+```
+
