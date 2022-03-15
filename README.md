@@ -12,6 +12,7 @@ Também usei como consulta o artigo [demystifying scrapy item loaders](https://t
 * [How to crawl the web politely with Scrapy](https://www.zyte.com/blog/how-to-crawl-the-web-politely-with-scrapy/)  
 * [Reaproveitando ItemLoaders](https://www.geeksforgeeks.org/scrapy-item-loaders/)  
 * [Scrapy e SQLAlchemy](https://www.andrewvillazon.com/move-data-to-db-with-sqlalchemy/)  
+* [How to crawl the web politely](https://www.zyte.com/blog/how-to-crawl-the-web-politely-with-scrapy/)  
 
 ## Sobre Scrapy  
 
@@ -51,7 +52,24 @@ ITEM_PIPELINES = {
 }
 ```  
 
-### Logging  
+### Algumas configurações  
+
+[**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
+Por padrão a velocidade de espera para download do `scrapy` é de 0 que, quando somado ao fato de o `scrapy` submeter várias requisições simultaneamente, podem fazer com que alguns servidores sejam sobre carregados. Cada uma dessas configurações podem ser definidas. Contudo, cada site pode ter uma resposta diferente e ao definir valores mais elevados, pode-se estar perdendo a chance de otimizar o processo de raspagem. Essa extensão serve para ajustar automaticamente e dinâmicamente o *delay* do processo de crawling beseando-se na velocidade de carga de ambos: o servidor onde se encontra o raspador e *website* sendo raspado.  
+
+> The main idea is the following: if a server needs latency seconds to respond, a client should send a request each latency/N seconds to have N requests processed in parallel.
+
+O interessante é que erros como 404 podem ser retornados mais rápidos que respostas regulares, fazendo com que com valore sreduzidos de *download delay* e de *concurrency limit* o raspador irá enviar requisições mais rápidos quandoo servidor retornar erros. O que é, contudo, o oposto do que um raspador deveria fazer: em caso de erros, aumentar o *delay* pois os mesmos podem estar sendo criados pela alta carga de requisições.  
+
+Em resumo, a extensão `AutoThrottle` ajusta o *delay* de download baseando-se nas seguintes regras: 
+* Os `spiders` sempre iniciam com um *delay* definido pela configuração `AUTOTHROTTLE_START_DELAY` (default = 5);
+* Quando a resposta é recebida, o *download delay* é calculado como `latencia / N`, onde `latencia` é a latencia da resposta e `N` é definido por `AUTOTHROTTLE_TARGET_CONCURRENCY` (default = 1.0).
+* O *download delay* para as próximas requisições são, estão configuradas considerando a média dos *download delay* anteriores;
+* :warning: A latencia de respostas com erros "non-200" não são autorizadas a aumentar o *delay*; 
+* O *download delay* não pode ser menor que o definido em `DOWNLOAD_DELAY` ou maior que `AUTOTHROTTLE_MAX_DELAY`;  
+
+
+#### Logging  
 *Logging* é uma forma de acompanhar os eventos que ocorrem enquanto um software é executado. As chamadas de log são adicionadas sempre que eventos específicos occorrem e são acompanhados por uma mensagem descritiva, podendo conter um dado a partir de uma variável. A importância dos eventos podem ser chamados por `level` ou `severity`.  
 * print(): Usado para apresentar no console a saida de um script ou programa;  
 * `logg.info()`: Informa eventos que ocorrem em uma opração normal (e.g. for status monitoring or fault investigation); Também pode ser usado `logging.debug()` para um detlhamento maior da saida, caso seja necessário diagnóstico detalhado;  
@@ -131,14 +149,33 @@ class SpiderCloseMonitorSuite(MonitorSuite):
 
 > As spidermon.core.monitors.Monitor inherits from Python unittest.TestCase, you can use all existing assertion methods in your monitors.
 
-É preciso informar no `settings.py`:
+É preciso informar no `settings.py`:  
 ```
 SPIDERMON_SPIDER_CLOSE_MONITORS = (
     ''scrapy_tutorial.monitors.SpiderCloseMonitorSuite',',
 )
 ```
 
-Seria possível, tamém configurar o pipeline para incluir o erro de validação como um campo no item. Por padrão, será inserido `_validation` ao item quando o mesmo não corresponder ao esquema, ao usar a constante `SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS` como `True` em `settings.py`.  
+#### Mais sobre `Monitor`
+Uma instância Monitor define a lógica de monitoramento e tem as seguintes proporidades, que podem ser usadas:
+
+- `data.stats` Objeto tipo dicionário contendo as estatísticas do `spider` executado.  
+- `data.crawler` Instancia do `Crawler` usado.  
+- `data.spider` Instancia do `spider` usado.  
+
+
+#### Item validation  
+O `Item validator` permite confirmar se os items retornados estão conforme com uma estrutura predeterminada, garantindo que todos os campos contenham dados no formato esperado.. Para isso, se pode usar [`schematics`](https://schematics.readthedocs.io/en/latest/) ou [`JSON Schema`](https://json-schema.org/).  
+
+Para isso é necessário estar usando `Scrapy items`.
+
+As validações deverão ser criadas em [`validators.py`](scrapy_tutorial/validators.py) e, em seguida, habilitadas no `settings.py`, tanto em como [`pipeline`](scrapy_tutorial/settings.py#L83) quanto em [`SPIDERMON_VALIDATION_MODELS`](scrapy_tutorial/settings.py#L72).  
+
+Com isso, toa vez que o `spider` for executado um novo conjunto de estatística será apresentado no log, apresentando a informação sobre o resultado das validações.  
+
+E a partir disso, pode-se criar um monitor específico para avisar sempre que a estatśitica indicar um padrão inadequado/erro de validação.  
+
+Seria possível, tamém configurar o pipeline para incluir o erro de validação como um campo no item. Por padrão, será inserido `_validation` como uma nova chave ao item quando o mesmo não corresponder ao esquema, ao usar a constante `SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS` como `True` em `settings.py`.  
 
 ```python
 SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
@@ -156,21 +193,12 @@ Exemplo de resultado:
 }
 ```  
 
-#### Mais sobre `Monitor`
-Uma instância Monitor define a lógica de monitoramento e tem as seguintes proporidades, que podem ser usadas:
-
-- `data.stats` Objeto tipo dicionário contendo as estatísticas do `spider` executado.  
-- `data.crawler` Instancia do `Crawler` usado.  
-- `data.spider` Instancia do `spider` usado.  
-
-
 ### Sobre `MonitorSuite`  
-O `MonitorSuit` agrupa um conjunto de classes `Monitor` e permite específicas quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
+O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicas quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
 
 Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto.
 
 ### Notificacoes  
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
-
 
