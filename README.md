@@ -3,7 +3,7 @@
 Tutorial do scrapy desponível na [documentação do mesmo](https://docs.scrapy.org/en/latest/intro/tutorial.html);  
 Esse projeto foi expandido com o tutorial ["a minimalist end to end scrapy tutorial" disponível na *towardsdatascience*](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), que inclui validação de dados e uso de SQLAlchemy.
 Por isso, alguns spiders deixarão de fazer sentido, por terem sido consolidados em apenas, como por exemplo `quotes_spider_author.py`.  
-Com relação ao processo de "gestão do log" da ferramenta, [ segui este tutorial](https://www.tutorialspoint.com/scrapy/scrapy_logging.htm) e [o tutorial original do móduloe `logging`](https://docs.python.org/3/howto/logging.html#logging-basic-tutorial) do python;  
+Com relação ao processo de "gestão do log" da ferramenta, [segui este tutorial](https://www.tutorialspoint.com/scrapy/scrapy_logging.htm) e [o tutorial original do módulo `logging`](https://docs.python.org/3/howto/logging.html#logging-basic-tutorial) do python;  
 Também usei como consulta o artigo [demystifying scrapy item loaders](https://towardsdatascience.com/demystifying-scrapy-item-loaders-ffbc119d592a);  
 
 * [`spidermon`](https://spidermon.readthedocs.io/en/latest/) tutorial para monitoramento dos scraps;  
@@ -32,7 +32,11 @@ Fluxo de processmento do scrapy:
 
 **Ao usar classes Items e uma base de dados relacional para armazenar os dados raspados é possível que se pergunte se deve-se consolidar todos os dados em apenas uma classeItem ou em várias. Sim, é possível, mas não recomendado, já que os dados serão raspados assíncronamente e isso demandará a incorporação de uma lógica para associar os dados, ao passo que, em apenas uma classItem, isso é resolvido pelo scrapy.**
 
-Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html), que é uma forma mais conveniente de incorporar os dados instanciando como Items, permitindo pré e pós-processamento dos mesmos (como limpeza, conversão, etc.) num código a parte. O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de elementos. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
+Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html), que é uma forma mais conveniente de incorporar os dados instanciando como Items, permitindo pré e pós-processamento dos mesmos (como limpeza, conversão, etc.) num código a parte. Há funçes já criadas, mas o usuário pode criar os seus *processors*: 
+
+> The only condition is that the processor function’s first argument must be an iterable.
+
+O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de elementos. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
 
 Neste caso, vamos adicionar, além de outras, uma função em `items.py` a ser aplicada usando o [`MapCompose`](https://docs.scrapy.org/en/2.4/_modules/itemloaders/processors.html), que é um [`loader.processors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors) removendo as áspas unicode que vem da citação.  
 
@@ -55,6 +59,7 @@ ITEM_PIPELINES = {
 ### Algumas configurações  
 
 #### [**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
+
 Por padrão a velocidade de espera para download do `scrapy` é de 0 que, quando somado ao fato de o `scrapy` submeter várias requisições simultaneamente, podem fazer com que alguns servidores sejam sobre carregados. Cada uma dessas configurações podem ser definidas. Contudo, cada site pode ter uma resposta diferente e ao definir valores mais elevados, pode-se estar perdendo a chance de otimizar o processo de raspagem. Essa extensão serve para ajustar automaticamente e dinâmicamente o *delay* do processo de crawling beseando-se na velocidade de carga de ambos: o servidor onde se encontra o raspador e *website* sendo raspado.  
 
 > The main idea is the following: if a server needs latency seconds to respond, a client should send a request each latency/N seconds to have N requests processed in parallel.
@@ -68,29 +73,57 @@ Em resumo, a extensão `AutoThrottle` ajusta o *delay* de download baseando-se n
 * :warning: A latencia de respostas com erros "non-200" não são autorizadas a aumentar o *delay*; 
 * O *download delay* não pode ser menor que o definido em `DOWNLOAD_DELAY` ou maior que `AUTOTHROTTLE_MAX_DELAY`;  
 
-
 #### Logging  
-*Logging* é uma forma de acompanhar os eventos que ocorrem enquanto um software é executado. As chamadas de log são adicionadas sempre que eventos específicos occorrem e são acompanhados por uma mensagem descritiva, podendo conter um dado a partir de uma variável. A importância dos eventos podem ser chamados por `level` ou `severity`.  
+
+*Logging* é uma forma de acompanhar os eventos que ocorrem enquanto um software é executado. As chamadas de log são adicionadas sempre que eventos específicos occorrem e são acompanhados por uma mensagem descritiva, podendo conter um dado a partir de uma variável. A importância dos eventos podem ser chamados por `level` ou `severity`.
 * print(): Usado para apresentar no console a saida de um script ou programa;  
-* `logg.info()`: Informa eventos que ocorrem em uma opração normal (e.g. for status monitoring or fault investigation); Também pode ser usado `logging.debug()` para um detlhamento maior da saida, caso seja necessário diagnóstico detalhado;  
-* `warnings.warn()`: Apresenta um aviso **warning** de um evento em específico; Usado caso o aviso seja ignorável e a aplicação deva ser modificada para eliminar o warning;  
+* `logg.info()`: Informa eventos que ocorrem em uma opração normal (e.g. estatus da execussão ou uma investigação padrão);  
+* Também pode ser usado `logging.debug()` para um detalhamento maior da saida, caso seja necessário;  
+* `warnings.warn()`: Apresenta um aviso **warning** de um evento; **Usado caso o aviso seja ignorável** e a aplicação deva ser modificada para eliminar o warning;  
 * `logging.warning()` Caso não haja nada que a aplicação cliente possa fazer para mudar dita situação, ainda que o evento deva ser notado e notificado;  
 * Raise an exception: Para reportar um erro relacionado a um evento particular no runtime;  
 * `logging.error()`, `logging.exception()` ou `logging.critical()`:
 Reportam error **sem** levantar uma exception;  
 	
-Ao usar o módulo `logging` do python, podemos adicionar o registro de log da nossa execussão que serão registradas junto aos ogs de outros módulos que estejamos usando.  
-O nível padrão de registro de logging é o `warning`. Ou seja, apenas os log identificados como `warning` ou de nível superior serão registrados/apresentados no console. Isso poder ser alterado na configuração de log. No caso do `logging`: `logging.basicConfig()`, ao qual poderá ser informado em `level`, qual o nível padrão de registro, `format` o formato a ser usado, inclusive se necessário informar data e hora, por exemplo...
-O `scrapy` uso o `configure_logging` para definir as configurações de log em geral, mas as configurações específicas seguem sendo definidas pelo `logging.basicConfig()`.
+Ao usar o módulo `logging` do python, podemos adicionar o registro de log da nossa execussão que serão registradas junto aos logs de outros módulos que estejamos usando.  
+O nível padrão de registro de logging é o `warning`. Ou seja, apenas os logs identificados como `warning` ou de nível superior serão registrados/apresentados no console. Isso poder ser alterado na configuração de log. No caso do `logging`: [`logging.basicConfig()`](https://docs.python.org/3/library/logging.html#logging.basicConfig), ao qual poderá ser informado em `level`, qual o nível padrão de registro, `format` o formato a ser usado, inclusive se necessário informar data e hora, por exemplo...  
 
-No caso do `Scrapy`, Loggers são então habilitados a apresentar mensagens enviadas por eles mesmos. Então é necessário usar "handlers" para apresentção dos mesmos e para redirecionamento das mensagens aos seus destinos como arquivos, emails, outras saódas padrão.
+```
+logging.basicConfig(level=logging.INFO)
+logger.info("Teste mensagem de info")
+# INFO:root:Teste mensagem de info
+```
+Quando estamos executando um processamento com multiplas funções pode ser interessante usar múltiplos `loggers`. Para isso, podemos definir um [`logger`](https://docs.python.org/3/library/logging.html#logging.getLogger) para cada função, por exemplo, para que as mensagens sejam facilmente identificadas:  
+
+```python
+logger = logging.getLogger("Teste")
+logger.info("Teste mensagem de info")
+# INFO:Teste:Teste mensagem de info
+```
+
+Essa definição de `logger` pode ser facilmente customizada para cad módulo com o `__name__`:
+```python
+logger = logging.getLogger(__name__)
+logger.info("Teste mensagem de info")
+INFO:__main__:Teste mensagem de info
+```
+
+#### Logging & Scrapy
+
+O `scrapy` usa o módulo `logging` na gestão dos logs. Logo, conhecendo o mulo `logging`, já temos o mínimo necessário para fazer as configurações e ajustes necessários.
+
+Ainda que possamos usar o `logging.basicConfig()`para confirgurar os logs, o scrapy apresenta o [`configure_logging`](https://docs.scrapy.org/en/latest/topics/logging.html#scrapy.utils.log.configure_logging) para definir as configurações de log em geral.
+
+> Another option when running custom scripts is to manually configure the logging. To do this you can use logging.basicConfig() to set a basic root handler.
+
+No caso do `Scrapy`, `Loggers` são habilitados para apresentar mensagens enviadas por eles mesmos. Então é necessário usar [`handlers`](https://docs.python.org/3/library/logging.handlers.html) para apresentação dos mesmos e para redirecionamento das mensagens aos seus destinos como arquivos, emails, outras saódas padrão.
 
 `scrapy.utils.log.configure_logging(settings = None, install_root_handler = True)`
 `install_root_handler` definido como `True` para habilitar o processo de registro de log.
 
 ### Spidermon  
 
-`spidermon` é um módulo criado para facilitar o processo de monitoramento e validação das raspasgens realizadas em um projeto. Segundo os desenovledores, os monitores são similares a *test case*, com um conjunto de method que serão executdos em um momento bem definido com a lógica do monitoramento.  
+`spidermon` é um módulo criado para facilitar o processo de monitoramento e validação das raspasgens realizadas em um projeto. Segundo os desenovledores, os monitores são similares a *test case*, com um conjunto de métodos que serão executados em um momento bem definido com a lógica do monitoramento.  
 
 Instalação:  
 
@@ -101,20 +134,22 @@ pip install "spidermon[monitoring,validation]"
 Para desenvolvimento tanto de monitores, como de validação. Caso contrário pode-se escolher um em detrimento de outro.
 
 **Habilitando `spidermon`**:  
+
 Tendo um projeto `Scrapy`, basta adicionar ao `setting.py`
+
 ```python
 SPIDERMON_ENABLED = True
 
 EXTENSIONS = {
     'spidermon.contrib.scrapy.extensions.Spidermon': 500,
 }
-```  
-
+```
 
 #### Monitor  
-Os monitores deverão ser agrupados em *monitor suites*, que definem uma lista de monitores a serem executados e as ações a serem realizadas antes e depois que a execução de todos os monitores.  
 
-Podemos criar um monitor para checar que ao menos X items sejam retornados após a execução do `spider`.
+Os monitores deverão ser agrupados em *monitor suites*, que definem uma lista de monitores a serem executados e as ações a serem realizadas antes e depois da execução de todos os monitores.  
+
+Podemos criar um monitor para checar que ao menos X itens sejam retornados após a execução do `spider`, usando dados presente nas estatiśticas do `spider`.
 
 Os monitores deverão estar em um arquivo [`monitors.py`](/scrapy_tutorial/monitors.py) que armazenará a definição e configuração dos monitores.  
 
@@ -135,7 +170,7 @@ class ItemCountMonitor(Monitor):
         )
 ```
 
-Após a definição dos monitores, é preciso incluir-los ao `MonitorSuite`, para que sejam executados:
+Após a definição dos monitores, é preciso incluí-los ao `MonitorSuite`, para que sejam executados:
 
 ```python
 class SpiderCloseMonitorSuite(MonitorSuite):
@@ -152,30 +187,37 @@ class SpiderCloseMonitorSuite(MonitorSuite):
 É preciso informar no `settings.py`:  
 ```
 SPIDERMON_SPIDER_CLOSE_MONITORS = (
-    ''scrapy_tutorial.monitors.SpiderCloseMonitorSuite',',
+    'scrapy_tutorial.monitors.SpiderCloseMonitorSuite',
 )
 ```
 
 #### Mais sobre `Monitor`
+
 Uma instância Monitor define a lógica de monitoramento e tem as seguintes proporidades, que podem ser usadas:
 
 - `data.stats` Objeto tipo dicionário contendo as estatísticas do `spider` executado.  
 - `data.crawler` Instancia do `Crawler` usado.  
 - `data.spider` Instancia do `spider` usado.  
 
+#### Sobre `MonitorSuite`  
+
+O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicar quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
+
+Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto/spider.
 
 #### Item validation  
-O `Item validator` permite confirmar se os items retornados estão conforme com uma estrutura predeterminada, garantindo que todos os campos contenham dados no formato esperado.. Para isso, se pode usar [`schematics`](https://schematics.readthedocs.io/en/latest/) ou [`JSON Schema`](https://json-schema.org/).  
 
-Para isso é necessário estar usando `Scrapy items`.
+O `Item validator` permite confirmar se os items retornados estão conforme com uma estrutura predeterminada, garantindo que todos os campos contenham dados no formato esperado. Para isso, se pode usar [`schematics`](https://schematics.readthedocs.io/en/latest/) ou [`JSON Schema`](https://json-schema.org/).  
 
-As validações deverão ser criadas em [`validators.py`](scrapy_tutorial/validators.py) e, em seguida, habilitadas no `settings.py`, tanto em como [`pipeline`](scrapy_tutorial/settings.py#L83) quanto em [`SPIDERMON_VALIDATION_MODELS`](scrapy_tutorial/settings.py#L72).  
+Para isso é necessário estar usando [`Scrapy items`](#L26).
 
-Com isso, toa vez que o `spider` for executado um novo conjunto de estatística será apresentado no log, apresentando a informação sobre o resultado das validações.  
+As validações deverão ser criadas em [`validators.py`](scrapy_tutorial/validators.py) e, em seguida, habilitadas no `settings.py`: tanto em [`pipeline`](scrapy_tutorial/settings.py#L83) como em [`SPIDERMON_VALIDATION_MODELS`](scrapy_tutorial/settings.py#L72).  
 
-E a partir disso, pode-se criar um monitor específico para avisar sempre que a estatśitica indicar um padrão inadequado/erro de validação.  
+Com isso, toda vez que o `spider` for executado um novo conjunto de estatística será apresentado no log, apresentando a informação sobre o resultado das validações.  
 
-Seria possível, tamém configurar o pipeline para incluir o erro de validação como um campo no item. Por padrão, será inserido `_validation` como uma nova chave ao item quando o mesmo não corresponder ao esquema, ao usar a constante `SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS` como `True` em `settings.py`.  
+E a partir disso, pode-se criar um monitor específico para avisar sempre que a estatística indicar um padrão inadequado/erro de validação.  
+
+Seria possível, também configurar o pipeline para incluir o erro de validação como um campo no item. Por padrão, será inserido `_validation` como uma nova chave ao item quando o mesmo não corresponder ao esquema, ao usar a constante `SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS` como `True` em `settings.py`.  
 
 ```python
 SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
@@ -193,15 +235,9 @@ Exemplo de resultado:
 }
 ```  
 
-#### Sobre `MonitorSuite`  
-O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicas quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
-
-Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto.
-
 #### Notificacoes  
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
-
 
 ### Fake user-agent
 
@@ -222,7 +258,9 @@ Para isso, existe o [`scrapy-faker-useragent`](https://github.com/alecxe/scrapy-
 ```python
 pip install scrapy-fake-useragent
 ```
+
 O mesmo deve ser adcionado ao [`downloader middleware`](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#downloader-middleware) do `settings.py`:
+
 ```python
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
@@ -231,4 +269,3 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy_fake_useragent.middleware.RetryUserAgentMiddleware': 401,
 }
 ```
-
