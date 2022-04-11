@@ -28,7 +28,9 @@ class SaveQuotesPipeline(object):
         author = Author()
         tag = Tag()
         author.name = item["author_name"]
-        author.bornlocation = item["author_bornlocation"][0] # aqui estava retornando uma lista e or isso dava erro
+        author.bornlocation = item["author_bornlocation"][
+            0
+        ]  # aqui estava retornando uma lista e or isso dava erro
         author.bio = item["author_bio"]
         author.birthday = item["author_birthday"]
         quote.quote_content = item["quote_content"]
@@ -65,7 +67,6 @@ class SaveQuotesPipeline(object):
 
 
 class DuplicatesPipeline(object):
-
     def __init__(self):
         """
         Initializes database connection and sessionmaker.
@@ -77,7 +78,9 @@ class DuplicatesPipeline(object):
 
     def process_item(self, item, spider):
         session = self.Session()
-        exist_quote = session.query(Quote).filter_by(quote_content=item["quote_content"]).first()
+        exist_quote = (
+            session.query(Quote).filter_by(quote_content=item["quote_content"]).first()
+        )
         session.close()
         if exist_quote is not None:  # the current quote exists
             raise DropItem("Duplicate item found: %s" % item["quote_content"])
