@@ -1,11 +1,13 @@
-## Estudando Scrapy like a Pro  
+# Estudando Scrapy like a Pro  
 
 Reposiótio criado inicialmente para seguir o tutorial da [documentação do scrapy](https://docs.scrapy.org/en/latest/intro/tutorial.html), mas que evoluiu para um estudo mais aprofundado envolvendo, além de [outros tutoriais sobre scrapy](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), módulos importantes do python diretamente ou indiretamente relacionados ao processo de raspagem de dados.
 
 Não considere este artigo/repositório como um **tutorial**, mas sim como um caderno de anotações a ser consultado no processo de desenvolvimento de um sistema de raspagem de dados. Se tiver interesse, a seguir listo os tutoriais que usei neste estudo. E como a ideia não foi ter um tutorial que consolide os demais, mas sim, um "caderno" de anotações, não vou apresentar o desenvolvimento de nenhuma solução de qualquer sorte, ainda que apresente alguns "retalhos de códigos" (*code snippet*);  
 
+De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar, aidna que nem tudo exposto neste README/artigo tenha sido implementado. Veja [como executar a raspagem deste projeto](#).
 
-### Sobre tutoriais  
+
+## Sobre tutoriais  
 
 Após o tutorial do scrapy desponível na [documentação do mesmo](https://docs.scrapy.org/en/latest/intro/tutorial.html), busquei mais conhecimentos sobre incorporação das raspagens a um banco de dados com SQLAlchemy, usando o tutorial ["a minimalist end to end scrapy tutorial" disponível na *towardsdatascience*](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), já que a minha ideia era persistir os dados aproveitando o máximo do poder do python e sem sujar as minhas mãos de SQL :). Este último inclui validação de dados e uso de SQLAlchemy.  
 
@@ -25,7 +27,7 @@ Além do já mencionado, os seguintes *links* e tutoriais foram fonte importante
 * [Scrapy e SQLAlchemy](https://www.andrewvillazon.com/move-data-to-db-with-sqlalchemy/)  
 
 
-### Sobre Scrapy  
+## Sobre Scrapy  
 
 **Scrapy e BeautifulSoup**
 [*Beatiful Soup*](https://beautiful-soup-4.readthedocs.io/en/latest/) é um módulo python para analisar (`parse`) HTML e XML, já o Scrapy é um framework de raspagem de dados *web* (`scraping`). Em resumo, você deve aprender a usar o Scrapy se quiser fazer uma raspagem sistemática.  
@@ -38,7 +40,7 @@ Scrapy é asíncrono e está baseado em [`twisted`](https://twistedmatrix.com/tr
 > Twisted is an event-driven networking engine written in Python
 
 
-#### Scrapy *Items* e *workflow*:   
+### Scrapy *Items* e *workflow*:   
 
 Os dados raspados pelo scrapy fundamentam-se no conceito de `itens`. Ou seja, os dados são raspados sendo instanciados em classe [`scrapy.item.Items`](https://docs.scrapy.org/en/latest/topics/items.html): um objeto python que define pares de chave-valor. Logo, scrapy suporta e possui várias classes de itens [1](https://docs.scrapy.org/en/latest/topics/items.html#item-types) [2](https://docs.scrapy.org/en/latest/topics/items.html#supporting-item-types);  
 > In other words, Field objects are plain-old Python dicts.  
@@ -56,7 +58,7 @@ Além disso, pode-se usar o [`ItemLoader`](https://docs.scrapy.org/en/latest/top
 > The only condition is that the processor function’s first argument must be an iterable.  
 
 
-#### *ItemLoaders*  
+### *ItemLoaders*  
 
 O `ItemLoader` o atribui os valores passados a uma lista, independente da quantidade de elementos. Quando tivermos um campo ao qual esperamos receber apenas um valor, podemos usar o `TakeFirst`.  
 
@@ -65,7 +67,7 @@ Neste caso, vamos adicionar, além de outras, uma função em `items.py` a ser a
 Como após o parse inicial de "quotes", queremos que os dados sejam persistidos ao `parse_author`, podemos passá-los como parâmetro `meta` do [`scrapy.Request.follow`](https://docs.scrapy.org/en/latest/topics/request-response.html?highlight=follow#scrapy.http.Request).  
 
 
-#### Item Pipeline  
+### Item Pipeline  
 
 Cada iten retornado do scrapy é enviado apra um [`Item Pipeline`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html) para processamentos adicionais como salvar os dados numa base de dados, validação, remoção de duplicatas, etc. Os mesmos são classes definidas em `pipelines.py` e é necessário habilitar os *pipelines* no `settings.py`. Cada *pipeline* habilitada tem um valor inteiro associado, variando de 0 a 1000, que indica a ordem de execussão. Valores mais baixos são executados primeiro.  
 
@@ -80,13 +82,13 @@ ITEM_PIPELINES = {
 ```  
 
 
-### ORM SQLAlchemy  
+## ORM SQLAlchemy  
 
 Vamos usar o [`ORM SQLAlchemy`](https://www.sqlalchemy.org/) para salvar os dados num SQLite por isso, precisaremos criar um arquivo chamado `models.py`, dentro da pasta `spider`. Nele vamos definir uma classe para conexão ao banco `db_connect()`. Vamos usar alguns parâmetros definidos no `settings.py` do projeto, usando o `get_project_settings()`. Neste caso, nos interessa a constante `CONNECTION_STRING` (`get_project_settings().get("CONNECTION_STRING")`).  
 
 O método `create_table()` criará as tabelas, na primeira execussão. A definição das tabelas seguem no mesmo arquivo. Apenas a tabela auxiliar (M-to-M) não é um método.  
 
-##### SQLAlchemy & scrapy Itempipeline**:  
+#### SQLAlchemy & scrapy Itempipeline**:  
 
 Tendo criado o modelo das entidades a serem persistidas na base de dados, bem como as configurações mínimas necessárias para o mesmo, será no `Itempipeline` que acessaremos os dados raspados e já tratados pelo `ItemLoaders` (lembre-se que os mesmos, não como dicionário python) e os instanciaremos nas respectivas classes do ORM SQLAlchemy.  
 
@@ -114,9 +116,9 @@ class SaveQuotesPipeline(object):
 ```
 
 
-### Sobre algumas configurações do Scrapy  
+## Sobre algumas configurações do Scrapy  
 
-#### [**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
+### [**`autothrottle`**](https://doc.scrapy.org/en/latest/topics/autothrottle.html#autothrottle-extension):  
 
 Por padrão a velocidade de espera para *download* do `scrapy` é de 0 que, quando somado ao fato de o `scrapy` submeter várias requisições simultaneamente, podem fazer com que alguns servidores sejam sobre carregados. Essa configuração, em conjunto com outras podem ser alteradas conforme a conveniência do projeto. Contudo, cada página *web* pode ter uma resposta diferente e, ao definir valores mais elevados de espera, pode-se estar perdendo a chance de otimizar o processo de raspagem. É aí que o `autothrottle` entra: essa extensão serve para ajustar automaticamente e dinâmicamente o *delay* do processo de raspagem beseando-se na velocidade de carga de ambos: o servidor onde se encontra o raspador e a págin *web* sendo raspada.  
 
@@ -131,7 +133,7 @@ Com a extensão `AutoThrottle` o ajuste do *delay* de *download* basea-se nas se
 * :warning: A latencia de respostas com erros "non-200" não são autorizadas a aumentar o *delay*;  
 * O *download delay* não pode ser menor que o definido em `DOWNLOAD_DELAY` ou maior que `AUTOTHROTTLE_MAX_DELAY`;  
 
-### Logging  
+## Logging  
 
 *Logging* é uma forma de acompanhar os eventos que ocorrem enquanto um *software* é executado. As chamadas de log são adicionadas sempre que eventos específicos occorrem sendo acompanhados por uma mensagem descritiva, podendo conter um dado a partir de uma variável. A importância dos eventos podem ser chamados por `level` ou `severity`.  
 
@@ -176,7 +178,7 @@ INFO:__main__:Teste mensagem de info
 ```
 
 
-##### Logging & Scrapy
+### Logging & Scrapy
 
 O `scrapy` usa o módulo `logging` na gestão dos logs. Logo, conhecendo o mulo `logging`, já temos o mínimo necessário para fazer as configurações e ajustes necessários.
 
@@ -189,7 +191,7 @@ No caso do `Scrapy`, `Loggers` são habilitados para apresentar mensagens enviad
 `scrapy.utils.log.configure_logging(settings = None, install_root_handler = True)`
 `install_root_handler` definido como `True` para habilitar o processo de registro de log.
 
-### Scrapy Stats Collection
+## Scrapy Stats Collection
 
 O [Stats Collection](https://docs.scrapy.org/en/latest/topics/stats.html) é outra forma do `scrapy` apresentar um resumo do que foi processado. O mesmo está baseado na estrutura de dicionário `chave/valor` e podem ser acessados pelo atributo [`stats`](https://docs.scrapy.org/en/latest/topics/api.html#scrapy.crawler.Crawler.stats) do [Crawller](https://docs.scrapy.org/en/latest/topics/api.html#topics-api-crawler).  
 
@@ -199,7 +201,7 @@ Num projeto pessoal tive a necessidade de persistir os resumos estatísticos das
 
 Posteriormente, foi necessário informar essa classe criada no `settings.py` do projeto: `STATS_CLASS = "project_name.stats.SpidersStats"`
 
-### scrapy & Errback  
+## scrapy Errback  
 
 Como é comum termos muitas `URLs` para raspar, é importante saber além das estatísticas gerais do *spider*, **o que não poder ser raspado**. Parra isso o scrapy fornece nos possibilita criar uma função a ser usada quando o request retorna algum erro. Essa função deve ser informada no parâmtero `errback` da função de [Request](https://docs.scrapy.org/en/latest/topics/request-response.html#scrapy.http.Request).  
 
@@ -208,7 +210,7 @@ Como é comum termos muitas `URLs` para raspar, é importante saber além das es
 Ao implementar um parse para `errback` me premitiu identificar as `URLs` e os erros encontrados no processo de request. Com isso, pudo criar um `ItemLoader` e `ItemPipeline` para persistir dita informação no banco de dados.
 
 
-### Spidermon  
+## Spidermon  
 
 `spidermon` é um módulo criado para facilitar o processo de monitoramento e validação das raspasgens realizadas usando scrapy. Segundo os desenovledores, os monitores são similares a *test case*, com um conjunto de métodos que serão executados em um momento bem definido com a lógica do monitoramento.  
 
@@ -233,7 +235,7 @@ EXTENSIONS = {
 ```
 
 
-#### Monitor  
+### Spidermon Monitor  
 
 Os monitores deverão ser agrupados em *monitor suítes*, uma lista a ser executada com as ações a serem realizadas antes e/ou depois do *spider*.  
 
@@ -271,7 +273,7 @@ O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicar 
 
 Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto/spider.  
 
-#### Item validation  
+### Spidermon Item validation  
 
 O `Item validator` permite confirmar se os itens retornados são de um tipo predeterminada, garantindo que todos os campos contenham dados no formato esperado. Para isso, se pode usar [`schematics`](https://schematics.readthedocs.io/en/latest/) ou [`JSON Schema`](https://json-schema.org/).  
 
@@ -306,11 +308,11 @@ Exemplo de resultado:
 }
 ```  
 
-#### Notificacoes  
+### Spidermon notificacoes  
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
 
-### Scrapy Faker user-agent
+## Scrapy Faker user-agent
 
 *User-agent* é uma *string* enviada a cada requisição HTTP que os navegadores usam para identificar a si mesmos na rede.  
 
@@ -360,4 +362,29 @@ FAKEUSERAGENT_PROVIDERS = [
 
 ```python
 FAKEUSERAGENT_FALLBACK = 'Mozilla/5.0 (Android; Mobile; rv:40.0)'
+```
+
+## Como executar a raspagem deste projeto  
+
+1. Faça o [fork](https://docs.github.com/es/enterprise-cloud@latest/get-started/quickstart/fork-a-repo) do repositório original;  
+2. [Clone](https://git-scm.com/docs/git-clone) para seu computador;  
+```commandline
+git clone git@github.com:Your_User_HERE/scrapy_tutorial.git
+cd scrapy_tutorial
+```
+
+3. Crie um ambiente virtual;
+
+```commandline
+python3 -m venv .venv
+```
+
+6. Instale os módulos necessários;  
+```commandline
+pip install -r requirements.txt
+```
+
+7. Raspe os dados;  
+```commandline
+srapy crawl quotes
 ```
