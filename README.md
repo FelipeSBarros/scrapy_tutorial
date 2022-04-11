@@ -366,7 +366,7 @@ FAKEUSERAGENT_FALLBACK = 'Mozilla/5.0 (Android; Mobile; rv:40.0)'
 
 ## Como executar a raspagem deste projeto  
 
-1. Faça o [fork](https://docs.github.com/es/enterprise-cloud@latest/get-started/quickstart/fork-a-repo) do repositório original;  
+1. Faça o [fork](https://docs.github.com/es/enterprise-cloud@latest/get-started/quickstart/fork-a-repo) do repositório [original](https://github.com/FelipeSBarros/scrapy_tutorial);  
 2. [Clone](https://git-scm.com/docs/git-clone) para seu computador;  
 ```commandline
 git clone git@github.com:Your_User_HERE/scrapy_tutorial.git
