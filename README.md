@@ -4,7 +4,7 @@ Reposiótio criado inicialmente para seguir o tutorial da [documentação do scr
 
 Não considere este artigo/repositório como um **tutorial**, mas sim como um caderno de anotações a ser consultado no processo de desenvolvimento de um sistema de raspagem de dados. Se tiver interesse, a seguir listo os tutoriais que usei neste estudo. E como a ideia não foi ter um tutorial que consolide os demais, mas sim, um "caderno" de anotações, não vou apresentar o desenvolvimento de nenhuma solução de qualquer sorte, ainda que apresente alguns "retalhos de códigos" (*code snippet*);  
 
-De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar, aidna que nem tudo exposto neste README/artigo tenha sido implementado. Veja [como executar a raspagem deste projeto](#).
+De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar, aidna que nem tudo exposto neste README/artigo tenha sido implementado. Veja [como executar a raspagem deste projeto](#Como-executar-a-raspagem-deste-projeto).
 
 
 ## Sobre tutoriais  
