@@ -332,11 +332,11 @@ Exemplo de resultado:
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
 
-### Fake user-agent
+### Scrapy Faker user-agent
 
 *User-agent* é uma *string* enviada a cada requisição HTTP que os navegadores usam para identificar a si mesmos na rede.  
 
-No caso do `scrapy`, o mesmo está definido no `settings.py`:
+No caso do `scrapy`, o mesmo está definido no `settings.py`, da seguinte forma:  
 
 ```python
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -345,17 +345,19 @@ No caso do `scrapy`, o mesmo está definido no `settings.py`:
 
 Isso é importante pois os servidores podem ser configurados para responder de acordo com um determinado *user agent*. Por exemplo, uma requisição de celular pode ser diracionado a um conteúdo específico.  
 
-Contudo, alguns servidores são configurados para bloquear o processo de *crawl* e *scrap*. Para evitar isso, deve-se mudar o *user agent* para cada request.  
+E nessa lógica, alguns servidores são configurados para bloquear o processo de *crawl* e *scrap*. Para evitar isso, deve-se mudar o *user agent* para cada request.  
 
-E é aí que entra o [`scrapy-faker-useragent`](https://github.com/alecxe/scrapy-fake-useragent). Trata-se de um `middleware` baseado no `fake-useragent` que, entre outras possibilidades, seleciona um *user agent* de acordo com estatísticas do mundo real.  
+E é aí que entra o [`scrapy-faker-useragent`](https://github.com/alecxe/scrapy-fake-useragent). Trata-se de um `middleware` baseado no `fake-useragent` que, entre outras possibilidades, seleciona um *user agent* (UA) de acordo com estatísticas do mundo real.  
+
+Ao usá-lo estaremos usando um novo UA a cada *Request* e, caso haja falha no mesmo, a falha recebe outro UA aleatório.  
 
 **Instalação**:  
 
-```python
+```commandline
 pip install scrapy-fake-useragent
 ```
 
-O mesmo deve ser adcionado ao [`downloader middleware`](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#downloader-middleware) no `settings.py`:
+O mesmo deve ser adcionado ao [`downloader middleware`](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#downloader-middleware) no `settings.py`, desabilitando os pipelines usados por *default*:  
 
 ```python
 DOWNLOADER_MIDDLEWARES = {
@@ -366,4 +368,18 @@ DOWNLOADER_MIDDLEWARES = {
 }
 ```
 
-:warning: Infelizmente o `scrapy-fake-useragent` não funcionou bem para mim. Sem tempo de entender o erro, decidi não usá-lo. Fico devendo mais info e reflexões sobre...
+Um ponto fundamental é definir os provedores de UA, informando de onde "pegar" novos UA. Pode-se informar mais de um *provider*, para caso um falhe. Os mesmos serão usandnos em ordem de apresentação:  
+
+```python
+FAKEUSERAGENT_PROVIDERS = [
+    'scrapy_fake_useragent.providers.FakeUserAgentProvider',
+    'scrapy_fake_useragent.providers.FakerProvider',
+    'scrapy_fake_useragent.providers.FixedUserAgentProvider',
+]
+```
+
+É interessante infromar um `FAKEUSERAGENT_FALLBACK`, a ser usado caso haja algum erro na busca de UA aleatórios.  
+
+```python
+FAKEUSERAGENT_FALLBACK = 'Mozilla/5.0 (Android; Mobile; rv:40.0)'
+```

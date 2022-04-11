@@ -55,18 +55,21 @@ ROBOTSTXT_OBEY = True
 DOWNLOADER_MIDDLEWARES = {
     "scrapy.downloadermiddlewares.useragent.UserAgentMiddleware": None,
     "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
+    "scrapy_tutorial.middlewares.ScrapyTutorialDownloaderMiddleware": None,
     "scrapy_fake_useragent.middleware.RandomUserAgentMiddleware": 400,
     "scrapy_fake_useragent.middleware.RetryUserAgentMiddleware": 401,
-    # 'scrapy_tutorial.middlewares.ScrapyTutorialDownloaderMiddleware': 543,
 }
+
 FAKEUSERAGENT_PROVIDERS = [
     "scrapy_fake_useragent.providers.FakeUserAgentProvider",  # this is the first provider we'll try
     "scrapy_fake_useragent.providers.FakerProvider",  # if FakeUserAgentProvider fails, we'll use faker to generate a user-agent string for us
     "scrapy_fake_useragent.providers.FixedUserAgentProvider",  # fall back to USER_AGENT value
 ]
-USER_AGENT = (
-    "Mozilla / 5.0(X11; Ubuntu; Linux x86_64; rv: 97.0) Gecko / 20100101 Firefox / 97.0"
-)
+
+# USER_AGENT = (
+#     "Mozilla / 5.0(X11; Ubuntu; Linux x86_64; rv: 97.0) Gecko / 20100101 Firefox / 97.0"
+# )
+FAKEUSERAGENT_FALLBACK = "Mozilla/5.0 (Android; Mobile; rv:40.0)"
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
