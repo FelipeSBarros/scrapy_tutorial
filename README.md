@@ -4,16 +4,35 @@ Reposiótio criado inicialmente para seguir o tutorial da [documentação do scr
 
 Não considere este artigo/repositório como um **tutorial**, mas sim como um caderno de anotações a ser consultado no processo de desenvolvimento de um sistema de raspagem de dados. Se tiver interesse, a seguir listo os tutoriais que usei neste estudo. E como a ideia não foi ter um tutorial que consolide os demais, mas sim, um "caderno" de anotações, não vou apresentar o desenvolvimento de nenhuma solução de qualquer sorte, ainda que apresente alguns "retalhos de códigos" (*code snippet*);  
 
-De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar, aidna que nem tudo exposto neste README/artigo tenha sido implementado. Veja [como executar a raspagem deste projeto](#Como-executar-a-raspagem-deste-projeto).
+De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar, ainda que nem tudo exposto neste README/artigo tenha sido implementado neste projeto. Veja [como executar a raspagem deste projeto](#Como-executar-a-raspagem-deste-projeto).
+
+ìndice:
+1. [Sobre esse cadernos e os tutoriais estudados](#Sobre-esse-cadernos-e-os-tutoriais-estudados)
+1. [Sobre Scrapy](#Sobre-Scrapy)
+   1. [Scrapy Items & Workflow](#Scrapy-Items-e-workflow)
+   1. [Item Pipeline](#Item-Pipeline)
+1. [ORM SQLAlchemy](#ORM-SQLAlchemy)
+   1. [SQLAlchemy & scrapy Itempipeline](#SQLAlchemy-&-scrapy-Itempipeline)
+1. [Sobre algumas configurações do Scrapy](#Sobre-algumas-configurações-do-Scrapy) 
+   1. [`autothrottle`](#autothrottle) 
+1. [`Logging`](#Logging) 
+1. [Scrapy Stats Collection](#Scrapy-Stats-Collection) 
+1. [scrapy Errback](#scrapy-Errback) 
+1. [Spidermon](#Spidermon) 
+   1. [#Spidermon Monitor](#Spidermon-Monitor) 
+   1. [Spidermon Item validation](#Spidermon-Item-validation) 
+   1. [Spidermon notificações](#Spidermon-notificações) 
+1. [Scrapy Faker user-agent](#Scrapy-Faker-user-agent) 
+1. [Como executar a raspagem deste projeto](#Como-executar-a-raspagem-deste-projeto) 
 
 
-## Sobre tutoriais  
+## Sobre esse cadernos e os tutoriais estudados  
 
-Após o tutorial do scrapy desponível na [documentação do mesmo](https://docs.scrapy.org/en/latest/intro/tutorial.html), busquei mais conhecimentos sobre incorporação das raspagens a um banco de dados com SQLAlchemy, usando o tutorial ["a minimalist end to end scrapy tutorial" disponível na *towardsdatascience*](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), já que a minha ideia era persistir os dados aproveitando o máximo do poder do python e sem sujar as minhas mãos de SQL :). Este último inclui validação de dados e uso de SQLAlchemy.  
+Após o tutorial do scrapy disponível na [documentação do mesmo](https://docs.scrapy.org/en/latest/intro/tutorial.html) (veja a seção [Sobre Scrapy](#Sobre-Scrapy) para conhecer essa *framework*), busquei mais conhecimentos sobre incorporação das raspagens a um banco de dados com SQLAlchemy, usando o tutorial ["a minimalist end to end scrapy tutorial" disponível na *towardsdatascience*](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), já que a minha ideia era persistir os dados aproveitando o máximo do poder do python e sem sujar as minhas mãos de SQL :). Este último inclui validação de dados e uso de SQLAlchemy.  
 
 :warning: Alguns spiders criados para um tutorial poderão deixar de fazer sentido. No presente projeto, todos os *spiders* estão consolidados em apenas um (`quotes_spider.py`).  
 
-Com relação ao processo de "gestão do log" da ferramenta, [segui este tutorial](https://www.tutorialspoint.com/scrapy/scrapy_logging.htm) e [o tutorial original do módulo `logging`](https://docs.python.org/3/howto/logging.html#logging-basic-tutorial) do python.  
+Com relação ao processo de "gestão do log" da ferramenta, [segui este tutorial](https://www.tutorialspoint.com/scrapy/scrapy_logging.htm) e [o tutorial original do módulo `logging`](https://docs.python.org/3/howto/logging.html#logging-basic-tutorial) do python. Nem pre3ciso dizer, né?! O [@dunosauro](https://twitter.com/dunossauro) tem uma [live só sobre logging](https://www.youtube.com/watch?v=PGAOqAWuwC0) que é muito boa.  
 
 Não posso deixar de mencionar o artigo [demystifying scrapy item loaders](https://towardsdatascience.com/demystifying-scrapy-item-loaders-ffbc119d592a), um ótimo tutorial que mostra como validar e, de fato, desmistificar o [`ItemLoader`](https://docs.scrapy.org/en/latest/topics/loaders.html#module-scrapy.loader) do *scrapy*.  
 
@@ -69,7 +88,7 @@ Como após o parse inicial de "quotes", queremos que os dados sejam persistidos 
 
 ### Item Pipeline  
 
-Cada iten retornado do scrapy é enviado apra um [`Item Pipeline`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html) para processamentos adicionais como salvar os dados numa base de dados, validação, remoção de duplicatas, etc. Os mesmos são classes definidas em `pipelines.py` e é necessário habilitar os *pipelines* no `settings.py`. Cada *pipeline* habilitada tem um valor inteiro associado, variando de 0 a 1000, que indica a ordem de execussão. Valores mais baixos são executados primeiro.  
+Cada iten retornado do scrapy é enviado para um [`Item Pipeline`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html) para processamentos adicionais como salvar os dados numa base de dados, validação, remoção de duplicatas, etc. Os mesmos são classes definidas em `pipelines.py` e é necessário habilitar os *pipelines* no `settings.py`. Cada *pipeline* habilitada tem um valor inteiro associado, variando de 0 a 1000, que indica a ordem de execução. Valores mais baixos são executados primeiro.  
 
 Em `ItemPipeline`, recebemos todos os itens raspados, então será nele onde definiremos a qual tablela/campo cada um será salva, bem como lógicas para evitar registros duplicados. É preciso, ainda, habilitá-los no `settings.py`.  
 
@@ -86,17 +105,17 @@ ITEM_PIPELINES = {
 
 Vamos usar o [`ORM SQLAlchemy`](https://www.sqlalchemy.org/) para salvar os dados num SQLite por isso, precisaremos criar um arquivo chamado `models.py`, dentro da pasta `spider`. Nele vamos definir uma classe para conexão ao banco `db_connect()`. Vamos usar alguns parâmetros definidos no `settings.py` do projeto, usando o `get_project_settings()`. Neste caso, nos interessa a constante `CONNECTION_STRING` (`get_project_settings().get("CONNECTION_STRING")`).  
 
-O método `create_table()` criará as tabelas, na primeira execussão. A definição das tabelas seguem no mesmo arquivo. Apenas a tabela auxiliar (M-to-M) não é um método.  
+O método `create_table()` criará as tabelas, na primeira execução. A definição das tabelas seguem no mesmo arquivo. Apenas a tabela auxiliar (M-to-M) não é um método.  
 
-#### SQLAlchemy & scrapy Itempipeline**:  
+### SQLAlchemy & scrapy `Itempipeline`:  
 
 Tendo criado o modelo das entidades a serem persistidas na base de dados, bem como as configurações mínimas necessárias para o mesmo, será no `Itempipeline` que acessaremos os dados raspados e já tratados pelo `ItemLoaders` (lembre-se que os mesmos, não como dicionário python) e os instanciaremos nas respectivas classes do ORM SQLAlchemy.  
 
-Aproveitando que Itempipiline são classes, podemos adicionar ao método de inicialização da classe (`__init__`) os parâmetros de inicialização e criação da sessão com o banco de dados. E, no método [`process_item`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html#process_item) desenvolver a lógica de instanciação dos dados no modelo do banco. É interessante entender, também que, seguindo o fluxo de trabalho do scrapy, o *pipeline* será executado a cada iten raspado e após o seu processamento com [`Itemprocessors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors).  
+Aproveitando que `Itempipeline` são classes, podemos adicionar ao método de inicialização da classe (`__init__`) os parâmetros de inicialização e criação da seção com o banco de dados. E, no método [`process_item`](https://docs.scrapy.org/en/latest/topics/item-pipeline.html#process_item) desenvolver a lógica de instanciação dos dados no modelo do banco. É interessante entender, também que, seguindo o fluxo de trabalho do scrapy, o *pipeline* será executado a cada iten raspado e após o seu processamento com [`Itemprocessors`](https://docs.scrapy.org/en/latest/topics/loaders.html#input-and-output-processors).  
 
 Exemplo:
 
-```python
+```
 class SaveQuotesPipeline(object):
     def __init__(self):
         engine = db_connect()
@@ -130,8 +149,9 @@ Com a extensão `AutoThrottle` o ajuste do *delay* de *download* basea-se nas se
 * Os `spiders` sempre iniciam com um *delay* definido pela configuração `AUTOTHROTTLE_START_DELAY` (default = 5);  
 * Quando a resposta é recebida, o *download delay* é calculado como `latencia / N`, onde `latencia` é a latencia da resposta e `N` é definido por `AUTOTHROTTLE_TARGET_CONCURRENCY` (default = 1.0);  
 * O *download delay* para as próximas requisições são, então configuradas considerando a média dos *download delay* anteriores;  
-* :warning: A latencia de respostas com erros "non-200" não são autorizadas a aumentar o *delay*;  
+* :warning: A latência de respostas com erros "non-200" não são autorizadas a aumentar o *delay*;  
 * O *download delay* não pode ser menor que o definido em `DOWNLOAD_DELAY` ou maior que `AUTOTHROTTLE_MAX_DELAY`;  
+
 
 ## Logging  
 
@@ -139,7 +159,7 @@ Com a extensão `AutoThrottle` o ajuste do *delay* de *download* basea-se nas se
 
 Algumas formas de acompanhar eventos de um *softwares* (com ou sem `logging`):  
 * print(): Usado para apresentar no console a saida de um *script* ou programa;  
-* `logg.info()`: Informa eventos que ocorrem numa operação normal (e.g. estatus da execussão ou uma investigação padrão);  
+* `logg.info()`: Informa eventos que ocorrem numa operação normal (e.g. estatus da execução ou uma investigação padrão);  
 * Também pode ser usado `logging.debug()` para um detalhamento maior da saida, caso seja necessário;  
 * `warnings.warn()`: Apresenta um aviso **warning** de um evento; **Usado caso o aviso seja ignorável** e a aplicação deva ser modificada para eliminar o warning;  
 * `logging.warning()` Caso não haja nada que a aplicação cliente possa fazer para mudar dita situação, ainda que o evento deva ser notado e notificado;  
@@ -147,7 +167,7 @@ Algumas formas de acompanhar eventos de um *softwares* (com ou sem `logging`):
 * `logging.error()`, `logging.exception()` ou `logging.critical()`:
 Reportam error **sem** levantar uma exception;  
 	
-Ao usar o módulo `logging` do python, podemos adicionar o registro de log da nossa execussão que serão registradas junto aos logs de outros módulos que estejamos usando.  
+Ao usar o módulo `logging` do python, podemos adicionar o registro de log da nossa execução que serão registradas junto aos logs de outros módulos que estejamos usando.  
 
 O nível padrão de registro de logging é o `warning`. Ou seja, apenas os logs identificados como `warning` ou de nível superior serão registrados/apresentados no console. Isso poder ser alterado na configuração de log. No caso do `logging`: [`logging.basicConfig()`](https://docs.python.org/3/library/logging.html#logging.basicConfig), ao qual poderá ser informado em `level`, qual o nível padrão de registro, `format` o formato a ser usado, inclusive se necessário informar data e hora, por exemplo...  
 
@@ -161,7 +181,7 @@ logger.info("Teste mensagem de info")
 
 Quando estamos executando um processamento com multiplas funções pode ser interessante usar múltiplos `loggers`. Para isso, podemos definir um [`logger`](https://docs.python.org/3/library/logging.html#logging.getLogger) para cada função, por exemplo, para que as mensagens sejam facilmente identificadas:  
 
-```python
+```
 import loggging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Teste")
@@ -171,7 +191,7 @@ logger.info("Teste mensagem de info")
 
 Essa definição de `logger` pode ser facilmente customizada para cad módulo com o `__name__`:  
 
-```python
+```
 logger = logging.getLogger(__name__)
 logger.info("Teste mensagem de info")
 INFO:__main__:Teste mensagem de info
@@ -191,6 +211,7 @@ No caso do `Scrapy`, `Loggers` são habilitados para apresentar mensagens enviad
 `scrapy.utils.log.configure_logging(settings = None, install_root_handler = True)`
 `install_root_handler` definido como `True` para habilitar o processo de registro de log.
 
+
 ## Scrapy Stats Collection
 
 O [Stats Collection](https://docs.scrapy.org/en/latest/topics/stats.html) é outra forma do `scrapy` apresentar um resumo do que foi processado. O mesmo está baseado na estrutura de dicionário `chave/valor` e podem ser acessados pelo atributo [`stats`](https://docs.scrapy.org/en/latest/topics/api.html#scrapy.crawler.Crawler.stats) do [Crawller](https://docs.scrapy.org/en/latest/topics/api.html#topics-api-crawler).  
@@ -200,6 +221,7 @@ Este último é uma instância da classe [`StatsCollector`](https://docs.scrapy.
 Num projeto pessoal tive a necessidade de persistir os resumos estatísticos das raspagens e, para isso, sobreescrevi o método `_persist_stats` da classe `StatsCollector`. Veja o [exemplo no arquivo `stats.py`](scrapy_tutorial/stats.py).  
 
 Posteriormente, foi necessário informar essa classe criada no `settings.py` do projeto: `STATS_CLASS = "project_name.stats.SpidersStats"`
+
 
 ## scrapy Errback  
 
@@ -269,7 +291,7 @@ Uma instância Monitor define a lógica de monitoramento e tem as seguintes prop
 
 **Sobre `MonitorSuite`**:  
 
-O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicar quais ações deverão ser executadas em momentos específicos da execussão do `Spider`.  
+O `MonitorSuite` agrupa um conjunto de classes `Monitor` e permite específicar quais ações deverão ser executadas em momentos específicos da execução do `Spider`.  
 
 Os mesmos deverão ser habilitados no [`settings`](https://spidermon.readthedocs.io/en/latest/monitors.html#monitor-suites) do projeto/spider.  
 
@@ -297,7 +319,7 @@ SPIDERMON_VALIDATION_ADD_ERRORS_TO_ITEMS = True
 ```
 
 Exemplo de resultado:  
-```python
+```
 {
     '_validation': defaultdict(
         <class 'list'>, {'author_url': ['Invalid URL']}),
@@ -308,7 +330,7 @@ Exemplo de resultado:
 }
 ```  
 
-### Spidermon notificacoes  
+### Spidermon notificações  
 
 `spidermon` tem algumas ferramentas para facilitar o processo de notificação resultante dos monitores. Tais notificações poderão ser enviadas para [slack](https://spidermon.readthedocs.io/en/latest/getting-started.html#slack-notifications) ou [telegram](https://spidermon.readthedocs.io/en/latest/getting-started.html#telegram-notifications).
 
