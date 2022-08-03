@@ -12,7 +12,7 @@ De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar
    1. [Scrapy Items & Workflow](#Scrapy-Items-e-workflow)
    1. [Item Pipeline](#Item-Pipeline)
 1. [ORM SQLAlchemy](#ORM-SQLAlchemy)
-   1. [SQLAlchemy & scrapy Itempipeline](#SQLAlchemy-&-scrapy-Itempipeline)
+   1. [SQLAlchemy & scrapy Itempipeline](#sqlalchemy--scrapy-itempipeline)
 1. [Sobre algumas configurações do Scrapy](#Sobre-algumas-configurações-do-Scrapy) 
    1. [`autothrottle`](#autothrottle) 
 1. [`Logging`](#Logging) 
