@@ -24,9 +24,10 @@ De qualquer forma, você é bem-vindo a usar os códigos do projeto para estudar
    1. [Spidermon notificações](#Spidermon-notificações) 
 1. [Scrapy Faker user-agent](#Scrapy-Faker-user-agent) 
 1. [Como executar a raspagem deste projeto](#Como-executar-a-raspagem-deste-projeto) 
+1. [`Scrapy` e `selenium`: executar raspagem dinâmica](#Scrapy-e-selenium:-executar-raspagem-dinâmica) 
 
 
-## Sobre esse cadernos e os tutoriais estudados  
+## Sobre esse caderno e os tutoriais estudados  
 
 Após o tutorial do scrapy disponível na [documentação do mesmo](https://docs.scrapy.org/en/latest/intro/tutorial.html) (veja a seção [Sobre Scrapy](#Sobre-Scrapy) para conhecer essa *framework*), busquei mais conhecimentos sobre incorporação das raspagens a um banco de dados com SQLAlchemy, usando o tutorial ["a minimalist end to end scrapy tutorial" disponível na *towardsdatascience*](https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-i-11e350bcdec0), já que a minha ideia era persistir os dados aproveitando o máximo do poder do python e sem sujar as minhas mãos de SQL :). Este último inclui validação de dados e uso de SQLAlchemy.  
 
@@ -410,3 +411,33 @@ pip install -r requirements.txt
 ```commandline
 srapy crawl quotes
 ```
+
+## `Scrapy` e `selenium`: executar raspagem dinâmica
+
+Em projeto de raspagem de dados, é comum encontrar páginas que antes de podermos raspar algo, tenhamos que logarnos, ou até navegar pela página para que os dados sejam carregados, o demanda uma outra estratgégia de raspagemd iferente da implementada até o momento. Para essas situações, uma alternativa é usar [`Selenium`](https://www.selenium.dev/) para simular as ações reais de um usuário, controlando o navegador para acessar os dados. Seguirei brevemente a quinta parte do [tutorial "a minimalist end to end scrapy tutorial"](https://harrywang.medium.com/a-minimalist-end-to-end-scrapy-tutorial-part-v-e7743ee9a8ef). A qual usará página https://dribbble.com/designers como fonte de dados.
+
+Instalando `Selenium`:  
+
+`pip install selenium`
+
+Além do `Selenium`, teremos que ter um navegador instaldado. Neste tutorial usaremos o [Chrome](https://chromedriver.chromium.org/downloads). Assegure-se de estar usando a versão mais atualizada(Menu → Chrome → About Google Chrome).
+
+O driver deverá ser salvo na raiz do projeto de raspagem.
+
+O [`spider dribble](./scrapy_tutorial/spiders/dribble_spider.py) faz o seguinte:
+
+Ao acessar a página, use `last_height = driver.execute_script(“return document.body.scrollHeight”)` para ter a altura atual da página;  
+Em seguida, `driver.execute_script(“window.scrollTo(0, document.body.scrollHeight);”)` é usado para descer pela ágina e acessar o conteúdo atualizado da página;  
+Pausa por 5 segundos e repete o procedimento anterior até o máximo de rolagens (10).
+
+Há ainda, um trecho de código usado para acessar a caixa de texto e inserir uma localização;
+
+```python
+search_location = driver.find_element_by_css_selector('#location-selectized').send_keys('New York')
+sleep(1)
+search_button = driver.find_element_by_css_selector('input[type="submit"]')
+search_button.click()
+sleep(5)
+```
+
+Como eu tive alguns problemas com o webdriver, acabei adotando a solução proposta [aqui](https://stackoverflow.com/a/61412036), adicionando a [instalação do driver](./scrapy_tutorial/spiders/dribble_spider.py#l41) no processo de raspagem. A mesma é feita apenas uma vez.
