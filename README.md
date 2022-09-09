@@ -47,6 +47,7 @@ Além do já mencionado, os seguintes *links* e tutoriais foram fonte importante
 * [How to crawl the web politely with Scrapy](https://www.zyte.com/blog/how-to-crawl-the-web-politely-with-scrapy/)  
 * [Reaproveitando ItemLoaders](https://www.geeksforgeeks.org/scrapy-item-loaders/)  
 * [Scrapy e SQLAlchemy](https://www.andrewvillazon.com/move-data-to-db-with-sqlalchemy/)  
+* [scrapy scrapyd guide](https://scrapeops.io/python-scrapy-playbook/extensions/scrapy-scrapyd-guide/)  
 
 
 ## Sobre Scrapy  
@@ -447,19 +448,35 @@ Como eu tive alguns problemas com o webdriver, acabei adotando a solução propo
 
 ## Scrapyd
 
-[`Scrapyd`](https://scrapyd.readthedocs.io/en/stable/) permite a gestão de vários projetos `scrapy` e cada projeto pode ter diferentes versões, onde apenas a última versão será usada.
+[`Scrapyd`](https://scrapyd.readthedocs.io/en/stable/) é uma ferramenta para executar os `spiders` em produção em servidores remotos. Ele é usado, basicamente, para `deploy` e agendamento/acompanhamento dos spiders em execução (usando JSON API), podendo rodar diferentes processos em paralelo.
 
-Uma convenção importante a ser usada é nomear as versões com números. O `scrapyd` usa o `distutils` algoritmo para diferenciar, por exemplo, a versão r10 (como maio que) r9.
+`Scrapyd` geralmente é executado no backgound `daemon` "escutando" as requisições de execução dos `spiders`, disparando o camando de execução: `scrapy crawl myspider`
 
-`Scrapyd` geralmente é executado no backgound `daemon` "escutando" as requisições de execução dos `spiders`, disparando: `scrapy crawl myspider`
+Além disso, permite:
+* Run Scrapy jobs.  
+* Pause & Cancel Scrapy jobs.  
+* Manage Scrapy project/spider versions.  
+* Access Scrapy logs remotely.  
+
+Com relação ao versionamento, uma convenção importante a ser usada é nomear as versões com números. O `scrapyd` usa o `distutils` algoritmo para diferenciar, por exemplo, a versão r10 (como maio que) r9.
+
 
 **Instalação**
 
-`pip install scrapyd`
+```
+pip install scrapyd
+# for deploy
+pip install scrapyd-client 
+```
 
 **Execução**
 
 `Scrapyd` possui uma interface web mínima para monitoramento dos processos em execução, logs e etc. O mesmo fica disponível em `http://localhost:6800/` após a execução do comando: `scrapyd`
+
+Existem diferentes dashboards/admins disponíveis para o `scrapyd`: 
+* [ScrapeOps](https://scrapeops.io/)  
+* [ScrapydWeb](https://github.com/my8100/scrapydweb)  
+* [SpiderKeeper](https://github.com/DormyMo/SpiderKeeper)  
 
 Criando uma tarefa de raspagem:  
 `curl http://localhost:6800/schedule.json -d project=default -d spider=quotes`
@@ -468,32 +485,76 @@ Criando uma tarefa de raspagem:
 
 Ver [documentação](https://scrapyd.readthedocs.io/en/stable/api.html) para mais especificações da API.  
 
-E a [parte de documentação](https://scrapyd.readthedocs.io/en/stable/config.html).  
+E a [parte de configuração](https://scrapyd.readthedocs.io/en/stable/config.html).  
 
 ### Deploy com `scrpyd`
 
-O processo de `deploy` envolve um processo de encapsulamento para que o mesmo seja enviado ao `Scrapyd` via `addversion.json` endpoint. Pode-se fazer isso manualmente, mas a maneira mais fácil de fazê-lo seria usando a ferramenta `scrapyd-deploy` do `scrapyd-client`, que faz tudo por você.
+O processo de `deploy` envolve um processo de encapsulamento (*eggfying*) para que o mesmo seja enviado ao `Scrapyd server`. Pode-se fazer isso manualmente, mas a maneira mais fácil de fazê-lo seria usando a ferramenta `scrapyd-deploy` do [`scrapyd-client`](https://github.com/scrapy/scrapyd-client), que faz tudo por você.
 
 ## [Scrapyd-client](https://github.com/scrapy/scrapyd-client)
 
-**scrapyd-deploy**:  
 `Scrapyd-client` é um pacote que provê:
 
-* [`scrapyd-deploy`]() para realizar o *deploy* de um projeto a um Scrapyd server;
+* [`scrapyd-deploy`](#Deploy) para realizar o *deploy* de um projeto a um Scrapyd server;  
 * [`scrapyd-client`]() para interagir com o projeto, uma vez feito o deploy.
 
-### Deploy
-Como já mencionado antes, o processo de deploy envolve dois passos:
-* [*Eggifying*](http://peak.telecommunity.com/DevCenter/PythonEggs) (encapsulamento em um `*.egg`) do projeto. Para isso será necessário instalar o [`setuptools`](https://pypi.org/project/setuptools/). 
-* Uploading do arquivo `*.egg` a um Scrapyd server através de um endpoint [addversion.json](https://scrapyd.readthedocs.io/en/latest/api.html#addversion-json).
+Uma vez instalado, abra o [`scrapyd.cfg`](./scrapyd.cfg) que fica localizado na mesma pasta do projet a ser colocado em produção. Neste arquivo, temos o `endpoint` ao qual o projeto deve ser usar em produção. Para habilitá-lo, devemos descomentar a variável `url`: `url = http://localhost:6800/`
+
+Em caso de produção, deveria ser informado o endpoint ao qual o mesmo seria enviado.
+
+Tendo feita essa configuração, basta executar a ferramenta de [deploy](#deploy):
+
+```commandline
+scrapyd-deploy default
+#Packing version 1662750751
+#Deploying to project "scrapy_tutorial" in http://localhost:6800/addversion.json
+#Server response (200):
+#{"node_name": "felipe-Inspiron-7560", "status": "ok", "project": "scrapy_tutorial", "version": "1662750751", "spiders": 3}
+```
+
+:warning: O servidor precisa estar rodando o `scrapyd`... Logo, não deixe de, antes de usar o `scrapyd-deploy`, executar `scrapyd`.
+
+Tendo o código bem-sucedido, isso fará o encapsulamento (eggfying) do projeto e o deploy do mesmo ao servidor local. Logo, existirá uma pasta nova `eggs` com uma subpasta com o nome do projeto e interno a ela o `.egg` criado com a versão do mesmo.
+
+O `scrapy-client` permite definirmos no `scrapy.cfg` diferentes `endpoints` de deploy, como "local" e "production":
+
+```commandline
+## scrapy.cfg
+
+[settings]
+default = demo.settings  
+
+[deploy:local]
+url = http://localhost:6800/
+project = demo 
+
+[deploy:production]
+url = <MY_IP_ADDRESS>
+project = demo 
+```
+
+Assim podemos criar o encapsulamento e deploy especificando o servidor desejado:
+```commandline
+## Deploy locally
+scrapyd-deploy local
+
+## Deploy to production
+scrapyd-deploy production
+```
+
+#### Deploy
+Como já mencionado antes, o processo de deploy envolve dois passos:  
+* [*Eggifying*](http://peak.telecommunity.com/DevCenter/PythonEggs) (encapsulamento em um `*.egg`) do projeto. Para isso será necessário instalar o [`setuptools`](https://pypi.org/project/setuptools/).  
+* Uploading do arquivo `*.egg` a um Scrapyd server através de um endpoint [addversion.json](https://scrapyd.readthedocs.io/en/latest/api.html#addversion-json).  
+
 > Add a version to a project, creating the project if it doesn’t exist.
   
 O processo de deploy automatiza ambos passos: construção de um `*.egg` e a publicação em um Scrapyd server.
 
-caso não haja um arquivo `setup.py`, basta criar um:
+### Controlando spiders pelo `Scrapyd`
 
-`scrapyd-deploy --build-egg=/dev/null`
-:warning: Não deixe de definir `package_data` no `setup.py`.
+Tendo feito o deploy, teremos três opções para controlar os `spiders`:  
 
-Para, enfim, fazer o deploy:
-`scrapyd-deploy <target> -p <project>`
+* [Scrapyd JSON API](https://scrapyd.readthedocs.io/en/stable/api.html);  
+* [Python-Scrapyd-API Library](https://github.com/djm/python-scrapyd-api);  
+* [Scrapyd Dashboard (scrapeops)](https://scrapeops.io/python-scrapy-playbook/extensions/scrapy-scrapyd-guide/#integrating-scrapyd-with-scrapeops);  
